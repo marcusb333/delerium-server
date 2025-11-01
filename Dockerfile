@@ -6,7 +6,7 @@ COPY src ./src
 RUN gradle --no-daemon clean installDist
 
 # ---- runner ----
-FROM eclipse-temurin:25-jre-jammy
+FROM eclipse-temurin:21-jre-jammy
 WORKDIR /app
 COPY --from=builder /build/build/install/cc.delerium/ /app/
 ENV DELETION_TOKEN_PEPPER=change-me
