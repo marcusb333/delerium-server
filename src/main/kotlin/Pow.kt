@@ -27,6 +27,12 @@ data class PowChallenge(val challenge: String, val difficulty: Int, val expiresA
 /**
  * Service for generating and verifying proof-of-work challenges
  * 
+ * Difficulty guidelines:
+ * - 8-10 bits: Light protection, ~256-1024 attempts (fast, good for production)
+ * - 12-14 bits: Medium protection, ~4K-16K attempts (balanced)
+ * - 16-18 bits: Strong protection, ~64K-256K attempts (slower, anti-spam)
+ * - 20+ bits: Very strong, exponentially more expensive (testing/extreme cases)
+ * 
  * @property difficulty Number of leading zero bits required in solutions
  * @property ttlSeconds Time-to-live for challenges in seconds
  */
