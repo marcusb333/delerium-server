@@ -1,6 +1,7 @@
 plugins {
     kotlin("jvm") version "2.1.21"
     application
+    id("org.owasp.dependencycheck") version "11.1.0"
 }
 repositories { mavenCentral() }
 dependencies {
@@ -26,3 +27,17 @@ dependencies {
 }
 application { mainClass.set("io.ktor.server.netty.EngineMain") }
 kotlin { jvmToolchain(21) }
+
+// OWASP Dependency Check configuration
+dependencyCheck {
+    format = "ALL"
+    outputDirectory = "build/reports/dependency-check"
+    suppressionFile = "dependency-check-suppressions.xml"
+    failBuildOnCVSS = 7.0f  // Fail build on CVSS >= 7.0 (High/Critical)
+    analyzers {
+        assemblyEnabled = false
+        nuspecEnabled = false
+        nodeEnabled = false
+    }
+    skipProjects = listOf(":test")
+}
