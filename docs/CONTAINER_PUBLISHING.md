@@ -1,6 +1,6 @@
 # Container Image Publishing Guide
 
-This guide explains how to publish the delerium-paste server as a reusable container image to Docker Hub or GitHub Container Registry (GHCR).
+This guide explains how to publish the delerium-paste-server as a reusable container image to Docker Hub or GitHub Container Registry (GHCR).
 
 ## Quick Start
 
@@ -144,6 +144,13 @@ The project includes:
 ### Basic Usage
 
 ```bash
+# With auto-generated pepper (works for development)
+docker run -d \
+  -p 8080:8080 \
+  -v /path/to/data:/data \
+  your-username/delerium-paste-server:latest
+
+# With explicit pepper (recommended for production)
 docker run -d \
   -p 8080:8080 \
   -v /path/to/data:/data \
@@ -153,8 +160,12 @@ docker run -d \
 
 ### Environment Variables
 
-- `DELETION_TOKEN_PEPPER` (required): Secret pepper for hashing deletion tokens
-  - Default: `change-me` (change this in production!)
+- `DELETION_TOKEN_PEPPER` (optional, but recommended for production): Secret pepper for hashing deletion tokens
+  - **Auto-generation**: If not set, the application automatically generates a cryptographically secure random pepper (32 bytes = 64 hex characters)
+  - **Production recommendation**: Set explicitly for consistency across container restarts
+    - If the pepper changes between restarts, deletion tokens created before the restart will no longer work
+    - Generate a secure random value: `openssl rand -hex 32`
+  - **Development**: Auto-generation works fine for development/testing
 
 ### Volumes
 
@@ -196,7 +207,12 @@ The multi-stage build produces a minimal runtime image containing only:
 
 ### Security Considerations
 
-1. **Change the default pepper**: Always set `DELETION_TOKEN_PEPPER` to a strong, random value
+1. **Pepper management**: 
+   - **Auto-generation**: If `DELETION_TOKEN_PEPPER` is not set, the application automatically generates a cryptographically secure random pepper (32 bytes)
+   - **Production best practice**: Set `DELETION_TOKEN_PEPPER` explicitly for consistency across restarts
+     - If the pepper changes between restarts, deletion tokens created before restart will be invalid
+     - Generate a secure value: `openssl rand -hex 32`
+   - **Security**: The auto-generated pepper is cryptographically secure (uses `SecureRandom`)
 2. **Volume permissions**: Ensure the `/data` volume has appropriate permissions
 3. **Network security**: Consider using a reverse proxy (nginx, traefik) in front of the container
 4. **Secrets management**: Use Docker secrets or environment variable management tools in production

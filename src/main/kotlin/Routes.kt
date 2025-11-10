@@ -1,7 +1,7 @@
 /**
  * Routes.kt - HTTP API endpoint definitions
  * 
- * This file defines all the REST API endpoints for the ZKPaste application:
+ * This file defines all the REST API endpoints for the delerium-paste-server application:
  * - GET  /api/pow - Request a proof-of-work challenge
  * - POST /api/pastes - Create a new encrypted paste
  * - GET  /api/pastes/{id} - Retrieve an encrypted paste
@@ -86,7 +86,7 @@ fun Routing.apiRoutes(repo: PasteRepo, rl: TokenBucket?, pow: PowService?, cfg: 
             try {
                 repo.create(id, body.ct, body.iv, body.meta, deleteToken)
                 call.respond(CreatePasteResponse(id, deleteToken))
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 call.respond(HttpStatusCode.InternalServerError, ErrorResponse("db_error"))
             }
         }

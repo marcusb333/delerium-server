@@ -1,7 +1,7 @@
 /**
  * App.kt - Main application configuration and initialization
  * 
- * This file contains the entry point for the ZKPaste Ktor server application.
+ * This file contains the entry point for the delerium-paste-server Ktor server application.
  * It handles:
  * - Application configuration loading from application.conf
  * - Database connection pooling with HikariCP
@@ -26,6 +26,7 @@ import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.server.plugins.cors.routing.CORS
 import io.ktor.server.routing.routing
 import org.jetbrains.exposed.sql.Database
+import java.security.SecureRandom
 
 /**
  * Application configuration data class
@@ -67,11 +68,37 @@ data class AppConfig(
  * 5. Initializes services (repository, rate limiter, proof-of-work)
  * 6. Configures API routes
  */
+/**
+ * Generate a cryptographically secure random pepper value
+ * 
+ * @param lengthBytes Number of random bytes to generate (default: 32 bytes = 64 hex characters)
+ * @return Hex-encoded random string suitable for use as a pepper
+ */
+fun generateSecurePepper(lengthBytes: Int = 32): String {
+    val random = SecureRandom()
+    val bytes = ByteArray(lengthBytes)
+    random.nextBytes(bytes)
+    return bytes.joinToString("") { "%02x".format(it) }
+}
+
 fun Application.module() {
     val cfg = environment.config
+    val envPepper = System.getenv("DELETION_TOKEN_PEPPER")
+    val deletionPepper = if (envPepper != null && envPepper.isNotBlank()) {
+        envPepper
+    } else {
+        // Auto-generate a secure random pepper if not provided
+        val generatedPepper = generateSecurePepper()
+        environment.log.info(
+            "ℹ️  DELETION_TOKEN_PEPPER not set. Auto-generated a secure random pepper. " +
+            "For production, consider setting DELETION_TOKEN_PEPPER explicitly for consistency across restarts."
+        )
+        generatedPepper
+    }
+    
     val appCfg = AppConfig(
         dbPath = cfg.property("storage.dbPath").getString(),
-        deletionPepper = System.getenv("DELETION_TOKEN_PEPPER") ?: "dev-pepper-change-me",
+        deletionPepper = deletionPepper,
         powEnabled = cfg.propertyOrNull("storage.pow.enabled")?.getString()?.toBoolean() ?: true,
         powDifficulty = cfg.property("storage.pow.difficulty").getString().toInt(),
         powTtl = cfg.property("storage.pow.ttlSeconds").getString().toInt(),

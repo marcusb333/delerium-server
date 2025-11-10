@@ -60,6 +60,13 @@ docker push ghcr.io/YOUR_USERNAME/delerium-paste-server:latest
 ## Using the Published Image
 
 ```bash
+# With auto-generated pepper (works for development)
+docker run -d \
+  -p 8080:8080 \
+  -v $(pwd)/data:/data \
+  ghcr.io/YOUR_USERNAME/delerium-paste-server:latest
+
+# With explicit pepper (recommended for production)
 docker run -d \
   -p 8080:8080 \
   -v $(pwd)/data:/data \

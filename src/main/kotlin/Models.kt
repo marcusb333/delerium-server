@@ -1,7 +1,7 @@
 /**
  * Models.kt - Data models for API request/response objects
  * 
- * This file defines all the data transfer objects (DTOs) used in the ZKPaste API.
+ * This file defines all the data transfer objects (DTOs) used in the delerium-paste-server API.
  * All encryption happens client-side; the server only stores encrypted content.
  */
 
