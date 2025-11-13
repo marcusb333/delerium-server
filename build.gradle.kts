@@ -3,6 +3,9 @@ plugins {
     application
     id("org.owasp.dependencycheck") version "11.1.0"
 }
+
+version = "0.1.7-alpha"
+
 repositories { mavenCentral() }
 dependencies {
     val ktor = "3.3.2"
