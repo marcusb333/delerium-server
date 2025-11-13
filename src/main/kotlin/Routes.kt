@@ -19,6 +19,7 @@ import io.ktor.server.routing.delete
 import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import io.ktor.server.routing.route
+import io.ktor.server.application.ApplicationCall
 
 /**
  * Configure all API routes
@@ -30,6 +31,26 @@ import io.ktor.server.routing.route
  * @param pow Optional proof-of-work service
  * @param cfg Application configuration
  */
+private val trustedProxyIps: Set<String> =
+    System.getenv("TRUSTED_PROXY_IPS")
+        ?.split(",")
+        ?.map { it.trim() }
+        ?.filter { it.isNotEmpty() }
+        ?.toSet()
+        ?: emptySet()
+
+private fun clientIp(call: ApplicationCall): String {
+    val remoteHost = call.request.origin.remoteHost
+    if (trustedProxyIps.isEmpty() || remoteHost !in trustedProxyIps) {
+        return remoteHost
+    }
+    val header = call.request.headers["X-Forwarded-For"] ?: return remoteHost
+    return header.split(",")
+        .map { it.trim() }
+        .firstOrNull { it.isNotEmpty() }
+        ?: remoteHost
+}
+
 fun Routing.apiRoutes(repo: PasteRepo, rl: TokenBucket?, pow: PowService?, cfg: AppConfig) {
     route("/api") {
         /**
@@ -56,8 +77,7 @@ fun Routing.apiRoutes(repo: PasteRepo, rl: TokenBucket?, pow: PowService?, cfg: 
          */
         post("/pastes") {
             if (rl != null) {
-                val ip = call.request.headers["X-Forwarded-For"]?.split(",")?.first()?.trim() 
-                    ?: call.request.origin.remoteHost
+                val ip = clientIp(call)
                 if (!rl.allow("POST:$ip")) {
                     call.respond(HttpStatusCode.TooManyRequests, ErrorResponse("rate_limited")); return@post
                 }

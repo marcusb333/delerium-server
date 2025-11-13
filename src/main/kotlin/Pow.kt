@@ -10,10 +10,11 @@
  * computationally expensive.
  */
 
-import java.security.SecureRandom
-import java.time.Instant
 import java.security.MessageDigest
+import java.security.SecureRandom
 import java.util.Base64
+import java.time.Instant
+import java.util.concurrent.ConcurrentHashMap
 
 /**
  * A proof-of-work challenge issued to a client
@@ -38,7 +39,8 @@ data class PowChallenge(val challenge: String, val difficulty: Int, val expiresA
  */
 class PowService(private val difficulty: Int, private val ttlSeconds: Int) {
     private val rand = SecureRandom()
-    private val cache = mutableMapOf<String, Long>() // challenge -> expiry timestamp
+    private val cache = ConcurrentHashMap<String, Long>() // challenge -> expiry timestamp
+    private val maxOutstandingChallenges = 10_000
 
     /**
      * Generate a new proof-of-work challenge
@@ -49,10 +51,13 @@ class PowService(private val difficulty: Int, private val ttlSeconds: Int) {
      * @return A new PowChallenge object
      */
     fun newChallenge(): PowChallenge {
+        val now = Instant.now().epochSecond
+        cleanup(now)
+        enforceCapacity(now)
         val bytes = ByteArray(16)
         rand.nextBytes(bytes)
         val ch = Base64.getUrlEncoder().withoutPadding().encodeToString(bytes)
-        val exp = Instant.now().epochSecond + ttlSeconds
+        val exp = now + ttlSeconds
         cache[ch] = exp
         return PowChallenge(ch, difficulty, exp)
     }
@@ -72,14 +77,20 @@ class PowService(private val difficulty: Int, private val ttlSeconds: Int) {
      * @return true if the solution is valid, false otherwise
      */
     fun verify(challenge: String, nonce: Long): Boolean {
+        val now = Instant.now().epochSecond
         val exp = cache[challenge] ?: return false
-        if (Instant.now().epochSecond > exp) return false
+        if (now > exp) {
+            cache.remove(challenge, exp)
+            return false
+        }
         val md = MessageDigest.getInstance("SHA-256")
         val input = "$challenge:$nonce".toByteArray()
         val digest = md.digest(input)
         val bits = leadingZeroBits(digest)
         val ok = bits >= difficulty
-        if (ok) cache.remove(challenge)
+        if (ok) {
+            cache.remove(challenge)
+        }
         return ok
     }
 
@@ -100,5 +111,30 @@ class PowService(private val difficulty: Int, private val ttlSeconds: Int) {
             break
         }
         return bits
+    }
+
+    private fun cleanup(now: Long) {
+        cache.entries.removeIf { (_, expires) -> expires <= now }
+    }
+
+    private fun enforceCapacity(now: Long) {
+        if (cache.size <= maxOutstandingChallenges) {
+            return
+        }
+        // Remove expired entries first
+        cleanup(now)
+        if (cache.size <= maxOutstandingChallenges) {
+            return
+        }
+        val overflow = cache.size - maxOutstandingChallenges
+        if (overflow <= 0) return
+        val entriesByExpiry = cache.entries.sortedBy { it.value }
+        var removed = 0
+        for (entry in entriesByExpiry) {
+            if (removed >= overflow) break
+            if (cache.remove(entry.key, entry.value)) {
+                removed++
+            }
+        }
     }
 }
