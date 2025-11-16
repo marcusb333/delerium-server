@@ -7,26 +7,26 @@
 # More specific patterns should be listed after more general ones.
 
 # Global owners - all files in the repository
-* @SnarkyB
+* @marcusb333
 
 # Kotlin source code
-/src/main/kotlin/ @SnarkyB
+/src/main/kotlin/ @marcusb333
 
 # Configuration files
-*.conf @SnarkyB
-application.conf @SnarkyB
+*.conf @marcusb333
+application.conf @marcusb333
 
 # Build configuration
-build.gradle.kts @SnarkyB
-settings.gradle.kts @SnarkyB
-gradle.properties @SnarkyB
+build.gradle.kts @marcusb333
+settings.gradle.kts @marcusb333
+gradle.properties @marcusb333
 
 # Docker files
-Dockerfile @SnarkyB
-docker-build.sh @SnarkyB
+Dockerfile @marcusb333
+docker-build.sh @marcusb333
 
 # Documentation
-*.md @SnarkyB
+*.md @marcusb333
 
 # Security and dependency files
-dependency-check-suppressions.xml @SnarkyB
+dependency-check-suppressions.xml @marcusb333
