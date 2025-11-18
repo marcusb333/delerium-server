@@ -15,7 +15,7 @@ USERNAME=${3:-${DOCKERHUB_USERNAME:-${GITHUB_USERNAME:-"your-username"}}}
 PLATFORMS=${4:-"linux/amd64,linux/arm64,linux/arm/v7"}
 PUSH_FLAG=${5:-""}
 
-IMAGE_NAME="delerium-paste-server"
+IMAGE_NAME="delerium-server"
 
 # Determine registry URL and full image name
 case "${REGISTRY}" in
