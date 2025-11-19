@@ -34,7 +34,7 @@ LABEL org.opencontainers.image.licenses="MIT"
 WORKDIR /app
 
 # Copy application from builder
-COPY --from=builder /build/build/install/delerium-paste-server/ /app/
+COPY --from=builder /build/build/install/delerium-server/ /app/
 
 # Create non-root user for security
 RUN groupadd -r delirium && useradd -r -g delirium delirium && \
@@ -56,4 +56,4 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
     CMD curl -f http://localhost:8080/api/pow || exit 1
 
 # Run the application
-ENTRYPOINT ["/app/bin/delerium-paste-server"]
+ENTRYPOINT ["/app/bin/delerium-server"]
